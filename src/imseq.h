@@ -1266,6 +1266,7 @@ void _writeClonotypeCounts(std::map<Clone<TAlphabet>, ClusterResult>const & clon
     {
         unsigned count;
         std::set<String<Dna5> > contribBCs;
+        CharString ids;
     };
     typedef    std::map<CharString, TVal> TCounter;
 
@@ -1289,6 +1290,14 @@ void _writeClonotypeCounts(std::map<Clone<TAlphabet>, ClusterResult>const & clon
         ClusterResult const & cr = storeElem->second;
         value.count += cr.count;
         value.contribBCs.insert(cr.contribBCs.begin(), cr.contribBCs.end());
+        // Collapse all read ids into 1 string
+        int idx = 0;
+        for (const auto &id : cr.ids) {
+            append(value.ids, id);
+            if (idx < cr.ids.size() - 1)
+                appendValue(value.ids, '!');
+            idx += 1;
+        }
     }
 
     // ============================================================================
@@ -1299,7 +1308,7 @@ void _writeClonotypeCounts(std::map<Clone<TAlphabet>, ClusterResult>const & clon
         std::ofstream * ofsPtr = openAndCheck(outPath);
         std::ofstream & ofs = *ofsPtr;
         for (typename TCounter::const_iterator fpCount = fingerPrintCounter.begin(); fpCount!=fingerPrintCounter.end(); ++fpCount)
-            ofs << fpCount->first << '\t' << fpCount->second.count << std::endl;
+            ofs << fpCount->first << '\t' << fpCount->second.count << '\t' << fpCount->second.ids << std::endl;
         ofs.close();
         delete ofsPtr;
     }
@@ -1748,12 +1757,14 @@ inline void getQualityString(String<uint64_t>& targetString, TContainer const & 
         targetString[position(ch)] = getQualityValue(*ch);
 }
 
-inline void countNewClone(TCloneStore & clusterStore, Clone<Dna5> const & clone, String<double> const & avgQualities, unsigned const count, std::set<String<Dna5> > const & bcSeqHistory) {
+inline void countNewClone(TCloneStore & clusterStore, Clone<Dna5> const & clone, String<double> const & avgQualities, unsigned const count, std::set<String<Dna5> > const & bcSeqHistory, std::set<CharString> const & recordIds) {
     ClusterResult& result = clusterStore[clone];
     unsigned oldCount = result.count;
     result.count += count;
     if (!bcSeqHistory.empty())
         result.contribBCs.insert(bcSeqHistory.begin(), bcSeqHistory.end());
+    if (!recordIds.empty())
+        result.ids.insert(recordIds.begin(), recordIds.end());
     if (result.count == count) { // First clone of this kind
         result.avgQVals = avgQualities;
     } else {
@@ -2222,7 +2233,7 @@ void splitAnalysisResults(
         FastqMultiRecord<TSequencingSpec> const & record = *recIt;
         if (!ar.reject) {
             // Increase the counter for this clone
-            countNewClone(nucCloneStore, ar.clone, ar.cdrQualities, record.ids.size(), record.bcSeqHistory);
+            countNewClone(nucCloneStore, ar.clone, ar.cdrQualities, record.ids.size(), record.bcSeqHistory, record.ids);
         } else {
             for (CharString const & id : record.ids)
                 appendValue(rejectEvents, RejectEvent(id, ar.reject));

@@ -21,9 +21,11 @@
 
 #ifndef SANDBOX_LKUCHENB_APPS_CDR3FINDER_CLUSTER_RESULT_H_
 #define SANDBOX_LKUCHENB_APPS_CDR3FINDER_CLUSTER_RESULT_H_
-
+#include <seqan/basic.h>
+#include <seqan/seq_io.h>
 #include <seqan/sequence.h>
 #include "fixed_size_types.h"
+#include "sequence_data_types.h"
 
 using namespace seqan;
 
@@ -37,6 +39,7 @@ class ClusterResult {
         double qMean;
         double qSD;
         ClusterResult();
+        std::set<CharString> ids;
 };
 
 
@@ -70,6 +73,9 @@ inline void mergeWithClusterResult(ClusterResult & base, ClusterResult const & a
     base.qSD = -1;
     // The barcode assignments of the added result are discarded, the ones of
     // the base result remain unchanged
+
+    // Update read ids in base cluster
+    base.ids.insert(add.ids.begin(), add.ids.end());
 }
 
 inline void mergeWithClusterResult(ClusterResult & base, ClusterResult const & add) {
