@@ -1764,7 +1764,7 @@ inline void countNewClone(TCloneStore & clusterStore, Clone<Dna5> const & clone,
     if (!bcSeqHistory.empty())
         result.contribBCs.insert(bcSeqHistory.begin(), bcSeqHistory.end());
     if (!recordIds.empty())
-        result.ids.insert(recordIds.begin(), recordIds.end());
+        result.ids.insert(result.ids.end(), recordIds.begin(), recordIds.end());
     if (result.count == count) { // First clone of this kind
         result.avgQVals = avgQualities;
     } else {

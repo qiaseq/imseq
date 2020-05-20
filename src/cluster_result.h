@@ -39,7 +39,7 @@ class ClusterResult {
         double qMean;
         double qSD;
         ClusterResult();
-        std::set<CharString> ids;
+        std::vector<CharString> ids;
 };
 
 
@@ -75,7 +75,7 @@ inline void mergeWithClusterResult(ClusterResult & base, ClusterResult const & a
     // the base result remain unchanged
 
     // Update read ids in base cluster
-    base.ids.insert(add.ids.begin(), add.ids.end());
+    base.ids.insert(base.ids.end(), add.ids.begin(), add.ids.end());
 }
 
 inline void mergeWithClusterResult(ClusterResult & base, ClusterResult const & add) {
